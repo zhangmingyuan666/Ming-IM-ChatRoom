@@ -11,7 +11,9 @@ export enum ISendMessageType {
     join_meeting = 'join_meeting',
     send_message = 'send_message',
     create_meeting = 'create_meeting',
-    somebody_outline='somebody_outline'
+    somebody_outline='somebody_outline',
+    get_message_in_meeting = 'get_message_in_meeting',
+    get_message_out_meeting = 'get_message_out_meeting',
 }
 
 export enum IReceiveMessageType {
@@ -22,7 +24,9 @@ export enum IReceiveMessageType {
     join_meeting = 'join_meeting',
     send_message = 'send_message',
     create_meeting = 'create_meeting',
-    somebody_outline='somebody_outline'
+    somebody_outline='somebody_outline',
+    get_message_in_meeting = 'get_message_in_meeting',
+    get_message_out_meeting = 'get_message_out_meeting',
 }
 
 // 消息下行响应结构(接受消息)

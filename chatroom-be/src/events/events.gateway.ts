@@ -40,6 +40,7 @@ export class EventsGateway {
     } as IWsResponse);
   }
 
+  // 连接回调
   @SubscribeMessage(IMessageType.connect)
   handleConnection(client: Socket): WsResponse<unknown> {
     //console.log('--------------');
@@ -116,8 +117,13 @@ export class EventsGateway {
     @MessageBody() request: IWsRequest,
     @ConnectedSocket() client: Socket,
   ): IWsResponse {
-    const { data, type } = request;
-    const { meetingId } = data;
+    const { data } = request;
+    const { meetingId, prevMeetingId } = data;
+
+    // 进行了会议的切换，所以从上个会议的set中移除id
+    if (prevMeetingId) {
+      client.rooms.delete(prevMeetingId);
+    }
     // 加入meetingId房间
     client.join(meetingId);
     console.log('成功加入meeting房间', 'create-meeting', meetingId);
@@ -138,18 +144,39 @@ export class EventsGateway {
     @ConnectedSocket() client: Socket,
   ) {
     const { data } = request;
-    const { msg, userId, meetingId } = data;
+    const { msg, userId, meetingId, otherUserId } = data;
 
-    // 对以meetingId为id的room进行单播通信
-    client.to(meetingId).emit('send_message', {
-      messageFlow: MessageFlow.down,
-      type: IMessageType.send_message,
-      code: 200,
-      data: {
-        msg,
-        userId,
-        meetingId,
-      },
-    } as IWsResponse);
+    // 判断聊天方是否在线
+    const { user_status, socket_id: socketId } =
+      await this.userService.findOneByUserId(otherUserId);
+
+    const isOtherUserAlive = !!user_status;
+
+    if (isOtherUserAlive) {
+      console.log('------------');
+      // 以meetingId为id的room进行单播通信
+      client.to(meetingId).emit(IMessageType.get_message_in_meeting, {
+        messageFlow: MessageFlow.down,
+        type: IMessageType.get_message_in_meeting,
+        code: 200,
+        data: {
+          msg,
+          userId,
+          meetingId,
+        },
+      } as IWsResponse);
+
+      // 以对方的socketId为id的room进行单播通信
+      client.to(socketId).emit(IMessageType.get_message_out_meeting, {
+        messageFlow: MessageFlow.down,
+        type: IMessageType.get_message_out_meeting,
+        code: 200,
+        data: {
+          msg,
+          userId,
+          meetingId,
+        },
+      } as IWsResponse);
+    }
   }
 }

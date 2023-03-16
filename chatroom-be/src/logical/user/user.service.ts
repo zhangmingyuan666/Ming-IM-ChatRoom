@@ -70,6 +70,12 @@ export class UserService {
     }
   }
 
+  // 检验User是否在线
+  async isUserIdAlive(userId: string): Promise<boolean> {
+    const user = await this.findOneByUserId(userId);
+    return !!user.user_status;
+  }
+
   async updateUserInfoByUserId(
     userId: string,
     user_status: 0 | 1 | 2,

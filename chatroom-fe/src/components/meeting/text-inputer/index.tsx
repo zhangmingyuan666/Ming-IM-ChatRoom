@@ -11,12 +11,11 @@ const TextInputer: React.FC = () => {
     const onTest = () => {
         const {meetingId} = meetingInfo;
         const {userId} = userInfo;
-        console.log(userId, value, meetingId);
-
         sendMessage(WsTypes.ISendMessageType.send_message, {
             meetingId,
             userId,
-            msg: value
+            msg: value,
+            otherUserId: currentSelectUser.userId
         })
         // const timestamp
         // sendMessage(ISendMessageType.message, '我是send的消息')

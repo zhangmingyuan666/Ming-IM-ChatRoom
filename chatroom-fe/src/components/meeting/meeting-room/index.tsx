@@ -2,18 +2,15 @@ import {postMeetingId} from '@/pages/api/meeting'
 import {updateMeetingInfo} from '@/store/slices/user'
 import {WsTypes} from '@/types'
 import {onMessage, sendMessage} from '@/ws'
-import {useEffect, useState} from 'react'
+import {useEffect, useRef, useState} from 'react'
 import {useDispatch, useSelector} from 'react-redux'
 import styled from 'styled-components'
-
-onMessage(WsTypes.IReceiveMessageType.send_message, (args: any) => {
-    console.log(args);
-})
 
 const MeetingRoom: React.FC = () => {
     const {userInfo, currentSelectUser, meetingInfo} = useSelector((state: any) => state.user)
     const dispatch = useDispatch()
-    const [messageList, setMessageList] = useState([])
+    const prevMeetingId = useRef("");
+    const [messageList, setMessageList] = useState([]);
     // 感觉redux真是反人类
     const updateMeetingInfoAction = (value: any) => {
         return dispatch(updateMeetingInfo(value))
@@ -25,6 +22,16 @@ const MeetingRoom: React.FC = () => {
         initalMeeting()
     }, [currentSelectUser])
 
+    useEffect(() => {
+        onMessage(WsTypes.IReceiveMessageType.get_message_in_meeting, (args: any) => {
+            console.log('聊天室内的消息接受',args);
+        })
+
+        onMessage(WsTypes.IReceiveMessageType.get_message_out_meeting, (args: any) => {
+            console.log('聊天室外的消息接收',args);
+        })
+    },[])
+
 
     async function initalMeeting() {
         const {userId: id1} = userInfo;
@@ -35,6 +42,7 @@ const MeetingRoom: React.FC = () => {
         if (!(id1 && id2)) return
 
         const ans = await postMeetingId(id1, id2);
+        console.log(ans);
         const {meeting_id: meetingId} = ans.data
         updateMeetingInfoAction({
             meetingId
@@ -44,7 +52,10 @@ const MeetingRoom: React.FC = () => {
         // console.log('meetingId', meetingId);
         sendMessage(WsTypes.ISendMessageType.create_meeting, {
             meetingId,
+            prevMeetingId: prevMeetingId.current,
         })
+
+        prevMeetingId.current = meetingId
     }
 
     return (

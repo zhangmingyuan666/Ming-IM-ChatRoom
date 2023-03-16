@@ -4,6 +4,7 @@ import * as crypto from 'crypto';
 import sequelize from 'src/database/sequelize';
 import * as Sequelize from 'sequelize'; // 引入 Sequelize 库
 import { sortString } from 'src/utils/handleMeeting';
+import { createTimeStamp } from 'src/utils/time';
 
 @Injectable()
 export class MeetingService {
@@ -37,7 +38,7 @@ export class MeetingService {
         return {
           code: 200,
           data: {
-            list: currentMeetingInfo,
+            ...currentMeetingInfo,
             msg: '获取当前会议信息成功',
           },
         };
@@ -94,7 +95,7 @@ export class MeetingService {
     msg: string,
     //timestamp: string,
   ) {
-    const timestamp = dayjs().format('YYYY-MM-DD HH:mm:ss');
+    const timestamp = createTimeStamp();
 
     const sql = `
     INSERT INTO 
