@@ -39,6 +39,7 @@ const MeetingUsersList: React.FC = () => {
         if (userInfo.userId) {
             const list = await getAllUserInfo(userInfo.userId) || []
             setUserList(list as any)
+            console.log(list);
         }
     }
 
@@ -60,6 +61,40 @@ const MeetingUsersList: React.FC = () => {
         initialContext();
     })
 
+    useSocketMessage(WsTypes.IReceiveMessageType.create_meeting, (res: WsTypes.IWsResponse) => {
+        const {data} = res;
+        const {msg, userOppsiteId} = data;
+        const newList: any = userList.map((user: any) => {
+            if(user._id === userOppsiteId){
+                return {
+                    ...user,
+                    unReadCount: 0,
+                }
+            }
+            return user
+        })
+        console.log('已经读取了信息');
+        setUserList(newList)
+        // initialContext();
+    })
+
+    useSocketMessage(WsTypes.IReceiveMessageType.get_message_out_meeting, (res: WsTypes.IWsResponse) => {
+        const {data} = res;
+        const {sender_id} = data;
+        const newList: any = userList.map((user: any) => {
+            if(user._id === sender_id){
+                return {
+                    ...user,
+                    unReadCount: user.unReadCount + 1,
+                }
+            }
+            return user
+        })
+        console.log('收取信息');
+        setUserList(newList)
+        // initialContext();
+    })
+
     return (
         <Container>
             <>
@@ -67,7 +102,7 @@ const MeetingUsersList: React.FC = () => {
                     userList.map((user: any) => {
                         return (
                             <div key={user._id} className='user-item' onClick={() => udpateUser(user)}>
-                                <Badge count={1} size="small">
+                                <Badge count={user.unReadCount} size="small">
                                     <Avatar style={{backgroundColor: '#fde3cf', color: '#f56a00'}}>U</Avatar>
                                  </Badge>
                                 <div className='user-info'>

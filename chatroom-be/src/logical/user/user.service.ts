@@ -3,9 +3,13 @@ import * as Sequelize from 'sequelize'; // 引入 Sequelize 库
 import { encryptPassword, makeSalt } from 'src/utils/cryptogram';
 import sequelize, { models } from '../../database/sequelize'; // 引入 Sequelize 实例
 import * as crypto from 'crypto';
+import { MeetingService } from '../meeting/meeting.service';
+import user from 'src/database/model/user';
 
 @Injectable()
 export class UserService {
+  constructor(private readonly meetingService: MeetingService) {}
+
   async findOne(username: string): Promise<any> {
     try {
       const { dataValues: ans } = await models.user.findOne({
@@ -57,13 +61,24 @@ export class UserService {
   `; // 一段平淡无奇的 SQL 查询语句
 
     try {
-      const user = await sequelize.query(sql, {
+      const users = await sequelize.query(sql, {
         type: Sequelize.QueryTypes.SELECT,
         raw: true,
         logging: false,
       });
 
-      return user;
+      for (let i = 0; i < users.length; i++) {
+        const user: any = users[i];
+        const count = await this.meetingService.getUserUnreadListInMeeting(
+          user._id,
+          userId,
+        );
+        user.unReadCount = count.length;
+      }
+
+      console.log(users);
+
+      return users;
     } catch (error) {
       console.log(error);
       return void 0;

@@ -109,12 +109,13 @@ export class EventsGateway {
   }
 
   @SubscribeMessage(IMessageType.create_meeting)
-  createMeeting(
+  async createMeeting(
     @MessageBody() request: IWsRequest,
     @ConnectedSocket() client: Socket,
-  ): IWsResponse {
+  ): Promise<WsResponse<any>> {
     const { data } = request;
-    const { meetingId, prevMeetingId } = data;
+    // sender_id: 用户本人，receiver_id:
+    const { meetingId, prevMeetingId, userId, userOppsiteId } = data;
 
     // 进行了会议的切换，所以从上个会议的set中移除id
     if (prevMeetingId) {
@@ -124,12 +125,19 @@ export class EventsGateway {
     client.join(meetingId);
     console.log('成功加入meeting房间', 'create-meeting', meetingId);
 
+    // 成功加入会议，认为成功获取数据
+    await this.meetingService.updateUserHasReadMessage(userId, meetingId);
+
     return {
-      messageFlow: MessageFlow.down,
-      type: IMessageType.create_meeting,
-      code: 200,
+      event: IMessageType.create_meeting,
       data: {
-        msg: `成功加入meeting房间`,
+        messageFlow: MessageFlow.down,
+        type: IMessageType.create_meeting,
+        code: 200,
+        data: {
+          msg: `成功加入meeting房间`,
+          userOppsiteId,
+        },
       },
     };
   }
@@ -166,6 +174,7 @@ export class EventsGateway {
       };
     }
     const messageInfo = await this.meetingService.getOneMeetingMessage(
+      userId,
       messageId,
     );
 

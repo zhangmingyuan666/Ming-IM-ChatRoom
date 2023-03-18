@@ -160,7 +160,7 @@ export class MeetingService {
     }
   }
 
-  async getOneMeetingMessage(message_id: string) {
+  async getOneMeetingMessage(receiver_id: string, message_id: string) {
     const ans = await models.meeting_message.findOne({
       where: {
         message_id,
@@ -168,5 +168,39 @@ export class MeetingService {
     });
 
     return ans.dataValues;
+  }
+
+  async getUserUnreadListInMeeting(sender_id: string, receiver_id: string) {
+    try {
+      const list = await models.meeting_message.findAll({
+        where: {
+          sender_id,
+          receiver_id,
+          is_msg_read: 0,
+        },
+      });
+
+      return list;
+    } catch (err) {
+      return 0;
+    }
+  }
+
+  async updateUserHasReadMessage(receiver_id: string, meeting_id: string) {
+    try {
+      await models.meeting_message.update(
+        {
+          is_msg_read: 1,
+        },
+        {
+          where: {
+            receiver_id,
+            meeting_id,
+          },
+        },
+      );
+    } catch (error) {
+      return 0;
+    }
   }
 }

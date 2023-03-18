@@ -64,14 +64,14 @@ const MeetingRoom: React.FC = () => {
     })
 
     async function initalMeeting() {
-        const {userId: id1} = userInfo;
-        const {userId: id2} = currentSelectUser;
+        const {userId} = userInfo;
+        const {userId: userOppsiteId} = currentSelectUser;
         // 获取当前会议号
 
         // 如果有一个没有id 那么都不进行处理
-        if (!(id1 && id2)) return
+        if (!(userId && userOppsiteId)) return
 
-        const ans = await postMeetingId(id1, id2);
+        const ans = await postMeetingId(userId, userOppsiteId);
         const {meeting_id: meetingId} = ans.data
         updateMeetingInfoAction({
             meetingId
@@ -81,6 +81,8 @@ const MeetingRoom: React.FC = () => {
         sendMessage(WsTypes.ISendMessageType.create_meeting, {
             meetingId,
             prevMeetingId: prevMeetingId.current,
+            userId,
+            userOppsiteId,
         })
 
         const historyList = await postMeetingHistory(meetingId)
