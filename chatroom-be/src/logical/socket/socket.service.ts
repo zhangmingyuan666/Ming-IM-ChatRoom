@@ -21,7 +21,6 @@ export class SocketService {
           socket_id: socketId,
         },
       });
-      console.log(dataValues);
       return dataValues._id;
     } catch (err) {
       return false;

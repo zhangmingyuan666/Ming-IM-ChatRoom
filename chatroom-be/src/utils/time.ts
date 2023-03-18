@@ -1,5 +1,4 @@
-import dayjs from 'dayjs';
-
+import * as dayjs from 'dayjs';
 export function createTimeStamp() {
   return dayjs().format('YYYY-MM-DD HH:mm:ss');
 }

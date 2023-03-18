@@ -4,11 +4,13 @@ import {useState} from 'react';
 import {useSelector} from 'react-redux';
 import styled from 'styled-components'
 import {WsTypes} from '@/types';
+import {emitListener, IEventName} from '@/event';
 
 const TextInputer: React.FC = () => {
     const {userInfo, currentSelectUser, meetingInfo} = useSelector((state: any) => state.user)
     const [value, setValue] = useState("")
     const onTest = () => {
+        emitListener(IEventName.scrollToBottom, "smooth")
         const {meetingId} = meetingInfo;
         const {userId} = userInfo;
         sendMessage(WsTypes.ISendMessageType.send_message, {

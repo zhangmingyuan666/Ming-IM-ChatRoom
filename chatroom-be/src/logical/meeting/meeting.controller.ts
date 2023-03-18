@@ -5,11 +5,6 @@ import { MeetingService } from './meeting.service';
 export class MeetingController {
   constructor(private readonly meetingService: MeetingService) {}
 
-  @Get()
-  a() {
-    console.log('a');
-  }
-
   // 获取当前会议Id
   @Post('getMeetingId')
   async getMeetingId(@Body() body: any) {
@@ -17,5 +12,10 @@ export class MeetingController {
       body.personIdFirst,
       body.personIdSecond,
     );
+  }
+
+  @Post('getMeetingHistory')
+  async getMeetinghistory(@Body() body: { meetingId: string }) {
+    return await this.meetingService.getMeetingHistory(body.meetingId);
   }
 }

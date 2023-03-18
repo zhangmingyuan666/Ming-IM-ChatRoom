@@ -2,10 +2,12 @@ import {useEffect, useState} from 'react'
 import styled from 'styled-components'
 import {getAllUserInfo} from '@/pages/api/user'
 import {useDispatch, useSelector} from 'react-redux'
-import {Avatar, message, Tag} from 'antd'
+import {Avatar, Badge, message, Tag} from 'antd'
 import {onMessage} from '@/ws'
 import {updateCurrentSelectUser} from '@/store/slices/user'
 import {WsTypes} from '@/types'
+import {IChattingMessageReponseType} from '@/types/ws'
+import useSocketMessage from '@/hooks/useSocketMessage'
 
 const HandleTag = function ({status}: any) {
     switch (status) {
@@ -42,20 +44,21 @@ const MeetingUsersList: React.FC = () => {
 
     useEffect(() => {
         initialContext()
-        onMessage(WsTypes.IReceiveMessageType.after_connection, (res: WsTypes.IWsResponse) => {
-            const {data} = res;
-            const {msg} = data;
-            message.success(msg)
-            initialContext();
-        })
-
-        onMessage(WsTypes.IReceiveMessageType.somebody_outline, (res: WsTypes.IWsResponse) => {
-            const {data} = res;
-            const {msg} = data;
-            message.error(msg)
-            initialContext();
-        })
     }, [])
+
+    useSocketMessage(WsTypes.IReceiveMessageType.after_connection, (res: WsTypes.IWsResponse) => {
+        const {data} = res;
+        const {msg} = data;
+        message.success(msg)
+        initialContext();
+    })
+
+    useSocketMessage(WsTypes.IReceiveMessageType.somebody_outline, (res: WsTypes.IWsResponse) => {
+        const {data} = res;
+        const {msg} = data;
+        message.error(msg)
+        initialContext();
+    })
 
     return (
         <Container>
@@ -64,7 +67,9 @@ const MeetingUsersList: React.FC = () => {
                     userList.map((user: any) => {
                         return (
                             <div key={user._id} className='user-item' onClick={() => udpateUser(user)}>
-                                <Avatar style={{backgroundColor: '#fde3cf', color: '#f56a00'}}>U</Avatar>
+                                <Badge count={1} size="small">
+                                    <Avatar style={{backgroundColor: '#fde3cf', color: '#f56a00'}}>U</Avatar>
+                                 </Badge>
                                 <div className='user-info'>
                                     <span>{user.username}</span>
                                     <div><HandleTag status={user.user_status} /></div>
@@ -93,7 +98,7 @@ const Container = styled.div`
         .user-info {
             display: flex;
             flex-direction: column;
-            margin-left: 3px;
+            margin-left: 10px;
         }
     }
     .user-item: hover {

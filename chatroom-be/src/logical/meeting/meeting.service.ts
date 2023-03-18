@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as dayjs from 'dayjs';
 import * as crypto from 'crypto';
-import sequelize from 'src/database/sequelize';
+import sequelize, { models } from 'src/database/sequelize';
 import * as Sequelize from 'sequelize'; // 引入 Sequelize 库
 import { sortString } from 'src/utils/handleMeeting';
 import { createTimeStamp } from 'src/utils/time';
@@ -11,7 +11,6 @@ export class MeetingService {
   // 获取Id
   async getMettingId(fromId: string, toId: string): Promise<any> {
     const [idFirst, idSecond] = sortString(fromId, toId);
-    // console.log([idFirst, idSecond]);
     // 根据这两个id进行查询
     const sql = `
     SELECT
@@ -22,16 +21,12 @@ export class MeetingService {
       meeting_person_id_1 = '${idFirst}' AND meeting_person_id_2 = '${idSecond}'  
     `;
 
-    console.log('-----');
-
     try {
       const ans = await sequelize.query(sql, {
         type: Sequelize.QueryTypes.SELECT,
         raw: true,
         logging: false,
       });
-
-      console.log(ans);
 
       const currentMeetingInfo = ans[0];
       if (currentMeetingInfo) {
@@ -45,7 +40,6 @@ export class MeetingService {
       } else {
         // 如果没有的话，插入新的行
         await this.createMeeting(idFirst, idSecond);
-        console.log('插入成功');
         // 插入成功后，获取当前信息
         return await this.getMettingId(idFirst, idSecond);
       }
@@ -92,17 +86,18 @@ export class MeetingService {
   async sendMessageInMeeting(
     meetingId: string,
     userId: string,
+    receiverUserId: string,
     msg: string,
-    //timestamp: string,
   ) {
     const timestamp = createTimeStamp();
+    const messageId = crypto.randomUUID();
 
     const sql = `
     INSERT INTO 
       meeting_message
-    (meeting_id, message_sender_id, message_id, create_timestamp, msg)
+    (meeting_id, sender_id, message_id, create_timestamp, msg, is_msg_read, receiver_id)
       VALUES
-    ('${meetingId}', '${userId}', '${crypto.randomUUID()}', '${timestamp}', '${msg}')
+    ('${meetingId}', '${userId}', '${messageId}', '${timestamp}', '${msg}', '0', '${receiverUserId}')
     `;
 
     try {
@@ -112,6 +107,7 @@ export class MeetingService {
         code: 200,
         data: {
           msg: '发送聊天消息成功',
+          messageId,
         },
       };
     } catch (err) {
@@ -137,7 +133,7 @@ export class MeetingService {
     WHERE
       meeting_id = '${meetingId}' 
     ORDER BY 
-      created_timestamp
+      create_timestamp
     `;
 
     try {
@@ -162,5 +158,15 @@ export class MeetingService {
         },
       };
     }
+  }
+
+  async getOneMeetingMessage(message_id: string) {
+    const ans = await models.meeting_message.findOne({
+      where: {
+        message_id,
+      },
+    });
+
+    return ans.dataValues;
   }
 }

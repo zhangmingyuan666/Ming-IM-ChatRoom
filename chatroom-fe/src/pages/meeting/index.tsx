@@ -35,8 +35,11 @@ const Container = styled.div`
         border-left: 1px solid #ccc;
 
         .meetingChat {
+            margin: 10px;
+            display: flex;
             flex: 1;
-            overflow: scroll;
+            overflow-y: scroll;
+            overflow-x: hidden;
         }
     }
 `

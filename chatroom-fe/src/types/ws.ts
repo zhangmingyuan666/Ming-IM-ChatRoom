@@ -27,23 +27,33 @@ export enum IReceiveMessageType {
     somebody_outline='somebody_outline',
     get_message_in_meeting = 'get_message_in_meeting',
     get_message_out_meeting = 'get_message_out_meeting',
+    message_sending_finish = 'message_sending_finish'
 }
 
 // 消息下行响应结构(接受消息)
-export interface IWsResponse {
+export interface IWsResponse <T = {
+    [key: string]: any
+}> {
     messageFlow: MessageFlow.down,
     code: number,
     type: IReceiveMessageType
-    data: {
-        [key: string]: any
-    }
+    data: T
 }
 
 // 消息上行发送结构(发送消息)
-export interface IWsRequest {
+export interface IWsRequest <T = {
+    [key: string]: any
+}> {
     messageFlow: MessageFlow.up
     type: ISendMessageType
-    data: {
-        [key: string]: any
-    }
+    data: T
+}
+
+export interface IChattingMessageReponseType {
+    msg: string, 
+    meeting_id: string,
+    message_id: string,
+    sender_id: string,
+    receiver_id: string,
+    is_msg_read: 0 | 1,
 }

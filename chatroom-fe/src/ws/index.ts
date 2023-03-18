@@ -40,23 +40,23 @@ export function destroySocket(){
 
 // 创建的时候进行初始化操作
 export function initSocket() {
-    onMessage(WsTypes.IReceiveMessageType.connect, (client: any) => {
-        console.log('连接成功：client', client);
-    });
+    // onMessage(WsTypes.IReceiveMessageType.connect, (client: any) => {
+    //     console.log('连接成功：client', client);
+    // });
 
-    // 对于onMessage进行初始化
-    onMessage(WsTypes.IReceiveMessageType.message, (args: any) => {
-        console.log('收到了message消息', 'args', args);
-    });
+    // // 对于onMessage进行初始化
+    // onMessage(WsTypes.IReceiveMessageType.message, (args: any) => {
+    //     console.log('收到了message消息', 'args', args);
+    // });
 
-    onMessage(WsTypes.IReceiveMessageType.after_connection, (args: any) => {
-        console.log('有人登录了', 'args', args);
-    });
+    // onMessage(WsTypes.IReceiveMessageType.after_connection, (args: any) => {
+    //     console.log('有人登录了', 'args', args);
+    // });
 
 
-    onMessage(WsTypes.IReceiveMessageType.somebody_outline, (args: any) => {
-        console.log('离线了', args);
-    });
+    // onMessage(WsTypes.IReceiveMessageType.somebody_outline, (args: any) => {
+    //     console.log('离线了', args);
+    // });
 }
 
 // 接受消息，接收到消息指定的回调
@@ -84,5 +84,9 @@ export function sendMessage(
             ...message
         } as WsTypes.IWsRequest,
     })
+}
+
+export function offMessage(messageType: WsTypes.IReceiveMessageType, callback?: any){
+    socket?.off(messageType, callback)
 }
 

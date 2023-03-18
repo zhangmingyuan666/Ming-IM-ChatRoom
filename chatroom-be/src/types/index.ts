@@ -14,6 +14,7 @@ export enum IMessageType {
   somebody_outline = 'somebody_outline',
   get_message_in_meeting = 'get_message_in_meeting',
   get_message_out_meeting = 'get_message_out_meeting',
+  message_sending_finish = 'message_sending_finish',
 }
 
 // 消息下行响应结构，服务端返回给客户的的数据结构

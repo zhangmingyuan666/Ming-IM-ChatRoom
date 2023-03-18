@@ -7,6 +7,7 @@ import {
   WsResponse,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { MeetingService } from 'src/logical/meeting/meeting.service';
 import { SocketService } from 'src/logical/socket/socket.service';
 import { UserService } from 'src/logical/user/user.service';
 import { IWsRequest, IWsResponse, IMessageType, MessageFlow } from 'src/types';
@@ -16,6 +17,7 @@ export class EventsGateway {
   constructor(
     private readonly userService: UserService,
     private readonly socketService: SocketService,
+    private readonly meetingService: MeetingService,
   ) {}
 
   @WebSocketServer() server: Server;
@@ -43,12 +45,9 @@ export class EventsGateway {
   // 连接回调
   @SubscribeMessage(IMessageType.connect)
   handleConnection(client: Socket): WsResponse<unknown> {
-    //console.log('--------------');
     const socketMap = this.server.sockets.sockets;
     console.log('当前连接数', socketMap.size);
-
     console.log('已经连接成功' + client.id);
-    //console.log('--------------');
 
     return {
       event: IMessageType.connect,
@@ -93,11 +92,8 @@ export class EventsGateway {
     @MessageBody() request: IWsRequest,
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
-    console.log(request);
     const { data, type } = request;
     const { username, userId, socketId } = data;
-
-    console.log('-------上线，', request);
 
     await this.socketService.loginWithSocketIdAndUserId(socketId, userId);
 
@@ -142,7 +138,7 @@ export class EventsGateway {
   async sendMessage(
     @MessageBody() request: IWsRequest,
     @ConnectedSocket() client: Socket,
-  ) {
+  ): Promise<WsResponse<any>> {
     const { data } = request;
     const { msg, userId, meetingId, otherUserId } = data;
 
@@ -151,19 +147,35 @@ export class EventsGateway {
       await this.userService.findOneByUserId(otherUserId);
 
     const isOtherUserAlive = !!user_status;
+    // 将聊天消息同步到数据库
+    const sendMessageResult = await this.meetingService.sendMessageInMeeting(
+      meetingId,
+      userId,
+      otherUserId,
+      msg,
+    );
+    const messageId = sendMessageResult.data.messageId;
+
+    if (!messageId) {
+      // return sendMessageResult;
+      return {
+        event: IMessageType.message_sending_finish,
+        data: {
+          msg: 'fuck',
+        },
+      };
+    }
+    const messageInfo = await this.meetingService.getOneMeetingMessage(
+      messageId,
+    );
 
     if (isOtherUserAlive) {
-      console.log('------------');
       // 以meetingId为id的room进行单播通信
       client.to(meetingId).emit(IMessageType.get_message_in_meeting, {
         messageFlow: MessageFlow.down,
         type: IMessageType.get_message_in_meeting,
         code: 200,
-        data: {
-          msg,
-          userId,
-          meetingId,
-        },
+        data: messageInfo,
       } as IWsResponse);
 
       // 以对方的socketId为id的room进行单播通信
@@ -171,12 +183,19 @@ export class EventsGateway {
         messageFlow: MessageFlow.down,
         type: IMessageType.get_message_out_meeting,
         code: 200,
-        data: {
-          msg,
-          userId,
-          meetingId,
-        },
+        data: messageInfo,
       } as IWsResponse);
     }
+
+    // 消息发送成功
+    return {
+      event: IMessageType.message_sending_finish,
+      data: {
+        messageFlow: MessageFlow.down,
+        type: IMessageType.message_sending_finish,
+        code: 200,
+        data: messageInfo,
+      },
+    };
   }
 }
