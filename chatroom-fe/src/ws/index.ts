@@ -1,8 +1,14 @@
-import {message} from 'antd';
 import io, {Socket} from 'socket.io-client'
-import {BASE_URL} from './constant';
+import {BASE_URL, SOCKET_STATUS} from './constant';
 import {WsTypes} from '@/types';
+import store from '@/store';
+import {updateSocketStatus} from '@/store/slices/socket';
+import {message} from 'antd';
+
+// 保存当前Socket
 let socket: Socket | null = null;
+// 默认为断开状态
+let webSocketState = SOCKET_STATUS.disconnect
 
 export function getCurrentSocket() {
     if (socket) {
@@ -14,8 +20,13 @@ export function getCurrentSocket() {
     });
 }
 
+export const getCurrentSocketState = () => {
+    return webSocketState
+}
+
 // 根据两个id来创建一个socket
 export function createSocket() {
+    console.log('socket', socket);
     if (socket) {
         console.log({
             msg: '当前已经存在socket了'
@@ -25,6 +36,7 @@ export function createSocket() {
     const client = io(BASE_URL).connect();
     socket = client
     initSocket()
+    console.log(socket);
 }
 
 export function destroySocket(){
@@ -40,9 +52,33 @@ export function destroySocket(){
 
 // 创建的时候进行初始化操作
 export function initSocket() {
-    // onMessage(WsTypes.IReceiveMessageType.connect, (client: any) => {
-    //     console.log('连接成功：client', client);
-    // });
+     onMessage(WsTypes.IReceiveMessageType.connect, () => {
+         console.log('连接成功：client', socket);
+         store.dispatch(updateSocketStatus(SOCKET_STATUS.connect))
+         const {user} = store.getState()
+         const {userInfo} = user
+
+         if(socket?.id){
+            // 处理connect行为: after-connection
+            const {userId, username} = userInfo
+            sendMessage(WsTypes.ISendMessageType.after_connection, {
+                userId,
+                username,
+                socketId: socket.id
+            })
+        }
+     });
+
+     onMessage(WsTypes.IReceiveMessageType.disconnect, (args: any) => {
+        console.log('断开连接----- ', args);
+        store.dispatch(updateSocketStatus(SOCKET_STATUS.disconnect))
+     })
+
+     onMessage(WsTypes.IReceiveMessageType.heartbeat, () => {
+        message.success('接收到了心跳包')
+    })
+
+     
 
     // // 对于onMessage进行初始化
     // onMessage(WsTypes.IReceiveMessageType.message, (args: any) => {
@@ -66,10 +102,14 @@ export function onMessage(messageType: WsTypes.IReceiveMessageType, callback: an
     })
 }
 
+export function sendHearbeatPacket(){
+    sendMessage(WsTypes.ISendMessageType.heartbeat)
+}
+
 // 发送消息
 export function sendMessage(
     messageType: WsTypes.ISendMessageType,
-    message: {[key: string]: any},
+    message?: {[key: string]: any},
     messageFlow?: WsTypes.MessageFlow) {
 
     if (!messageFlow) {

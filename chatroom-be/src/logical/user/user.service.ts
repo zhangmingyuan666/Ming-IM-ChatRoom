@@ -75,9 +75,6 @@ export class UserService {
         );
         user.unReadCount = count.length;
       }
-
-      console.log(users);
-
       return users;
     } catch (error) {
       console.log(error);

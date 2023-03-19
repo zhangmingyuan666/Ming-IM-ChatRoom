@@ -80,9 +80,19 @@ export class EventsGateway {
   // }
 
   // 心跳包监测接口
-  @SubscribeMessage('heartbeat')
-  handleHeatbeat(@MessageBody() data: string) {
-    return data;
+  @SubscribeMessage(IMessageType.heartbeat)
+  handleHeatbeat(): WsResponse<any> {
+    return {
+      event: IMessageType.heartbeat,
+      data: {
+        messageFlow: MessageFlow.down,
+        type: IMessageType.heartbeat,
+        code: 200,
+        data: {
+          msg: `心跳包响应成功`,
+        },
+      },
+    };
   }
 
   // 告知对方连接状态变化
@@ -120,7 +130,9 @@ export class EventsGateway {
     // 进行了会议的切换，所以从上个会议的set中移除id
     if (prevMeetingId) {
       client.rooms.delete(prevMeetingId);
+      client.leave(prevMeetingId);
     }
+
     // 加入meetingId房间
     client.join(meetingId);
     console.log('成功加入meeting房间', 'create-meeting', meetingId);
@@ -149,11 +161,20 @@ export class EventsGateway {
   ): Promise<WsResponse<any>> {
     const { data } = request;
     const { msg, userId, meetingId, otherUserId } = data;
+    if (!otherUserId) {
+      return {
+        event: IMessageType.message_sending_finish,
+        data: {
+          code: 500,
+          msg: 'fuck',
+        },
+      };
+    }
 
     // 判断聊天方是否在线
     const { user_status, socket_id: socketId } =
       await this.userService.findOneByUserId(otherUserId);
-
+    console.log(meetingId, userId, otherUserId, msg);
     const isOtherUserAlive = !!user_status;
     // 将聊天消息同步到数据库
     const sendMessageResult = await this.meetingService.sendMessageInMeeting(
@@ -169,6 +190,7 @@ export class EventsGateway {
       return {
         event: IMessageType.message_sending_finish,
         data: {
+          code: 500,
           msg: 'fuck',
         },
       };
@@ -177,6 +199,8 @@ export class EventsGateway {
       userId,
       messageId,
     );
+
+    console.log(meetingId, 'meetingId');
 
     if (isOtherUserAlive) {
       // 以meetingId为id的room进行单播通信

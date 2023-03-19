@@ -73,9 +73,8 @@ const MeetingUsersList: React.FC = () => {
             }
             return user
         })
-        console.log('已经读取了信息');
+        message.success('成功加入会议!');
         setUserList(newList)
-        // initialContext();
     })
 
     useSocketMessage(WsTypes.IReceiveMessageType.get_message_out_meeting, (res: WsTypes.IWsResponse) => {
@@ -90,7 +89,6 @@ const MeetingUsersList: React.FC = () => {
             }
             return user
         })
-        console.log('收取信息');
         setUserList(newList)
         // initialContext();
     })

@@ -5,6 +5,7 @@ import {updateMeetingInfo} from '@/store/slices/user'
 import {WsTypes} from '@/types'
 import {IChattingMessageReponseType, IWsResponse} from '@/types/ws'
 import {onMessage, sendMessage} from '@/ws'
+import {useRouter} from 'next/router'
 import {useEffect, useRef, useState} from 'react'
 import {useDispatch, useSelector} from 'react-redux'
 import styled from 'styled-components'
@@ -21,6 +22,7 @@ const MeetingRoom: React.FC = () => {
     const updateMeetingInfoAction = (value: any) => {
         return dispatch(updateMeetingInfo(value))
     }
+    const router = useRouter()
 
     useEffect(() => {
         // 此时选中了的进行列表的显示
@@ -73,6 +75,14 @@ const MeetingRoom: React.FC = () => {
 
         const ans = await postMeetingId(userId, userOppsiteId);
         const {meeting_id: meetingId} = ans.data
+
+        // 把meetingId储存到url
+        router.push(`/meeting`, {
+            query: {
+                meetingId
+            }
+        })
+        
         updateMeetingInfoAction({
             meetingId
         })
@@ -94,6 +104,36 @@ const MeetingRoom: React.FC = () => {
     useEffect(() => {
         emitListener(IEventName.scrollToBottom, "smooth")
     }, [messageList])
+
+    useEffect(() => {
+        console.log('---------------------');
+        async function foo(){
+                const {userId} = userInfo;
+                const {userId: userOppsiteId} = currentSelectUser;
+                const {asPath}  =router
+                const query = asPath.split('?')[1]
+
+                if(!query) return;
+
+                const [meetingIdKey, meetingId] = query.split('=')
+                console.log(meetingIdKey, meetingId);
+                if(meetingIdKey === 'meetingId' && meetingId) {
+                    sendMessage(WsTypes.ISendMessageType.create_meeting, {
+                        meetingId,
+                        prevMeetingId: meetingId,
+                        userId,
+                        userOppsiteId,
+                    })
+                    console.log('-------------');
+            
+                    const historyList = await postMeetingHistory(meetingId as string)
+                    setMessageList(historyList);
+                    console.log(historyList);
+                }
+            
+        }
+        foo()
+    }, [])
 
     return (
         <Container>

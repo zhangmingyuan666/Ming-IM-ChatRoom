@@ -39,22 +39,9 @@ const Login: React.FC = () => {
             localStorage.setItem('username', username)
 
             // 登陆成功 创建socket
-            createSocket();
-            const socket = getCurrentSocket()
-
-            // 接收到connect之后
-            onMessage(WsTypes.IReceiveMessageType.connect, () => {
-                if(socket?.id){
-                    // 处理connect行为: after-connection
-                    sendMessage(WsTypes.ISendMessageType.after_connection, {
-                        userId,
-                        username,
-                        socketId: socket.id
-                    })
-                    router.push('/meeting')
-                }      
-             })
-                 
+            // createSocket();
+            // const socket = getCurrentSocket()
+            router.push('/meeting')                 
         }
     };
 

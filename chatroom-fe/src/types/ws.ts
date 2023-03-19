@@ -3,6 +3,8 @@ export enum MessageFlow {
     "down" = "down"
 }
 
+
+
 export enum ISendMessageType {
     message = 'message',
     sent_chatting_status = 'sent_chatting_status',
@@ -14,12 +16,14 @@ export enum ISendMessageType {
     somebody_outline='somebody_outline',
     get_message_in_meeting = 'get_message_in_meeting',
     get_message_out_meeting = 'get_message_out_meeting',
+    heartbeat = 'heartbeat'
 }
 
 export enum IReceiveMessageType {
     message = 'message',
     sent_chatting_status = 'sent_chatting_status',
     connect = 'connect',
+    disconnect = 'disconnect',
     after_connection = 'after_connection',
     join_meeting = 'join_meeting',
     send_message = 'send_message',
@@ -27,7 +31,8 @@ export enum IReceiveMessageType {
     somebody_outline='somebody_outline',
     get_message_in_meeting = 'get_message_in_meeting',
     get_message_out_meeting = 'get_message_out_meeting',
-    message_sending_finish = 'message_sending_finish'
+    message_sending_finish = 'message_sending_finish',
+    heartbeat = 'heartbeat'
 }
 
 // 消息下行响应结构(接受消息)
