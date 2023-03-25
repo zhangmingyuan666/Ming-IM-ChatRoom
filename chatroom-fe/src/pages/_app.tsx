@@ -4,6 +4,18 @@ import styled from 'styled-components'
 import {Provider} from 'react-redux';
 import store from '@/store';
 
+// 在浏览器环境下进行监听
+if(process.browser){
+  import("../patching")
+}
+
+// fetch("https://disease.sh/v3/covid-19/historical/all?lastdays=all")
+//         .then((res) => {
+//           return res.json();
+//         })
+//         .then(res => {
+//           console.log(res);
+//         });
 
 export default function App({Component, pageProps}: AppProps) {
   return <Layout>
