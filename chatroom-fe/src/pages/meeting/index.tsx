@@ -1,12 +1,12 @@
 import {ConnectionHandler, MeetingHeader, MeetingRoom, MeetingTextInputer, MeetingUsersList} from '@/components/meeting'
-import useSocketMessage from '@/hooks/useSocketMessage'
-import {WsTypes} from '@/types'
-import {createSocket, destroySocket, getCurrentSocket, offMessage, onMessage, sendMessage} from '@/ws'
+import {createSocket, destroySocket} from '@/ws'
 import {SOCKET_STATUS} from '@/ws/constant'
 import React, {useEffect} from 'react'
 import {useDispatch, useSelector} from 'react-redux'
 import styled from 'styled-components'
 import {updateSocketStatus} from '@/store/slices/socket'
+import {parseCookies} from '@/utils/cookie'
+import {getIsJwtAcess} from '../api/server-request'
 
 const MeetingPage: React.FC = () => {
     const {userInfo} = useSelector((state: any) => state.user)
@@ -88,3 +88,53 @@ const Container = styled.div`
     }
     
 `
+
+export async function getServerSideProps(context: any) {
+    // const cookies = context.req.headers.cookie;
+    const {req, res} = context
+    const cookieData = parseCookies(req)
+
+    if (!Object.keys(cookieData).length) {
+        return {
+            redirect: {
+                permanent: false,
+                destination: '/login',
+            },
+        }
+    }
+
+    console.log('cookieData', cookieData);
+    try {
+        // 此时没有cookie了，那么过期
+        if (cookieData.token) {
+            console.log('toekn', cookieData.token);
+            const ans = await getIsJwtAcess(cookieData.token, cookieData)
+            console.log(ans);
+            if (ans.data.code !== 200) {
+                console.log('---token gg');
+                return {
+                    redirect: {
+                        permanent: false,
+                        destination: '/login',
+                    },
+                }
+            }
+            // console.log(ans);
+        }
+
+    } catch (err) {
+        console.log('---token gg');
+        return {
+            redirect: {
+                permanent: false,
+                destination: '/login',
+            },
+        }
+    }
+
+    return {
+        props: {
+            vvv: 'siuuuu'
+        }, // will be passed to the page component as props
+    }
+}

@@ -4,8 +4,21 @@ import {login, register} from '../api/login';
 import {useRouter} from 'next/router';
 import {useDispatch, useSelector} from 'react-redux';
 import {updateUserInfo} from '@/store/slices/user';
-import {createSocket, sendMessage,onMessage, getCurrentSocket} from '@/ws';
+import {createSocket, sendMessage, onMessage, getCurrentSocket} from '@/ws';
 import {WsTypes} from '@/types';
+
+const Container = styled.div`
+    min-width: 400px;
+    box-sizing: border-box;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    box-shadow: 2px 2px 5px;
+`
 
 
 const Login: React.FC = () => {
@@ -32,6 +45,7 @@ const Login: React.FC = () => {
 
         if (loginRes.code === 200) {
             const {userId, username, token} = loginRes.data
+            localStorage.setItem('token', token)
             updateUserInfoAction({
                 userId, username
             })
@@ -41,7 +55,7 @@ const Login: React.FC = () => {
             // 登陆成功 创建socket
             // createSocket();
             // const socket = getCurrentSocket()
-            router.push('/meeting')                 
+            router.push('/meeting')
         }
     };
 
@@ -91,19 +105,5 @@ const Login: React.FC = () => {
         </Container>
     )
 }
-
-const Container = styled.div`
-    min-width: 400px;
-    box-sizing: border-box;
-    padding-top: 10px;
-    padding-bottom: 10px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    border-radius: 5px;
-    box-shadow: 2px 2px 5px;
-`
-
 export default Login
 

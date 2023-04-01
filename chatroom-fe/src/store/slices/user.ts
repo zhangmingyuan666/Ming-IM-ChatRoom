@@ -1,12 +1,12 @@
-import { createSlice } from '@reduxjs/toolkit';
+import {createSlice} from '@reduxjs/toolkit';
 
 const counterSlice = createSlice({
   name: 'counter',
 
   initialState: {
     userInfo: {
-        userId: process.browser ?localStorage.getItem('userId') : null,
-        username: process.browser ?localStorage.getItem('username') : null
+      userId: process.browser ? localStorage.getItem('userId') : null,
+      username: process.browser ? localStorage.getItem('username') : null
     },
     currentSelectUser: {
       userId: null,
@@ -20,7 +20,7 @@ const counterSlice = createSlice({
   reducers: {
     updateUserInfo: (state, action) => {
       state.userInfo = action.payload;
-    },    
+    },
     updateCurrentSelectUser: (state, action) => {
       state.currentSelectUser = action.payload;
     },
@@ -31,7 +31,7 @@ const counterSlice = createSlice({
 });
 
 // 相当于以前的actions
-export const { updateUserInfo, updateCurrentSelectUser, updateMeetingInfo } = counterSlice.actions;
+export const {updateUserInfo, updateCurrentSelectUser, updateMeetingInfo} = counterSlice.actions;
 
 // 相当于以前的reducers
 export default counterSlice.reducer;

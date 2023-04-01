@@ -1,4 +1,4 @@
-import axios from './request'
+import axios from './request';
 export function getAllUserInfo(userId: string) {
     return axios.get('/user/find-all', {
         params: {

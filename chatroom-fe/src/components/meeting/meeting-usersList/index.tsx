@@ -1,13 +1,13 @@
-import {useEffect, useState} from 'react'
+import {useEffect, useRef, useState} from 'react'
 import styled from 'styled-components'
 import {getAllUserInfo} from '@/pages/api/user'
 import {useDispatch, useSelector} from 'react-redux'
-import {Avatar, Badge, message, Tag} from 'antd'
-import {onMessage} from '@/ws'
+import {Avatar, Badge, message, Tag, List, Skeleton} from 'antd'
 import {updateCurrentSelectUser} from '@/store/slices/user'
 import {WsTypes} from '@/types'
-import {IChattingMessageReponseType} from '@/types/ws'
 import useSocketMessage from '@/hooks/useSocketMessage'
+import {useRouter} from 'next/router'
+import {SOCKET_STATUS} from '@/ws/constant'
 
 const HandleTag = function ({status}: any) {
     switch (status) {
@@ -20,11 +20,24 @@ const HandleTag = function ({status}: any) {
     }
 }
 
+const defaultArr = [
+    {_id: 1},
+    {_id: 2},
+    {_id: 3},
+    {_id: 4},
+    {_id: 5},
+]
 
 const MeetingUsersList: React.FC = () => {
-    const [userList, setUserList] = useState([])
-    const {userInfo, currentSelectUser} = useSelector((state: any) => state.user)
+    const [userList, setUserList] = useState(defaultArr)
+    const [loading, setLoading] = useState(true)
+    const {userInfo, currentSelectUser, meetingInfo} = useSelector((state: any) => state.user)
+    const {socketStatus} = useSelector((state: any) => state.socket)
     const dispatch = useDispatch()
+    const firstRenderOver = useRef(true)
+    const router = useRouter()
+    const currentUserInfoCache = useRef(null)
+
 
     // 感觉redux真是反人类
     const updateUserInfoAction = (value: any) => {
@@ -35,17 +48,48 @@ const MeetingUsersList: React.FC = () => {
         updateUserInfoAction({username, userId})
     }
 
+    const reconnectWithRouter = (list: any, meetingId: string, userId: string) => {
+        const user = (list as any).find((item: any) => item._id === userId)
+        udpateUser(user)
+    }
+
+
     const initialContext = async () => {
         if (userInfo.userId) {
             const list = await getAllUserInfo(userInfo.userId) || []
             setUserList(list as any)
-            console.log(list);
+            setLoading(false)
+            console.log(router);
+            if (firstRenderOver.current) {
+                const {query = {}} = router
+                const {meetingId = '', userOppsiteId} = query
+                if (meetingId && userOppsiteId) {
+                    console.log('---');
+                    reconnectWithRouter(list, meetingId as string, userOppsiteId as string)
+                }
+                firstRenderOver.current = false
+            }
         }
     }
+
+
+    useEffect(() => {
+        // 不是第一次解析才会进行这样的处理
+        if (!firstRenderOver.current) {
+            console.log('statusChange', socketStatus);
+            // 重连会重新进会，更新socket状态
+            if (socketStatus === SOCKET_STATUS.connect) {
+                if (meetingInfo.meetingId && currentSelectUser.userId) {
+                    reconnectWithRouter(userList, meetingInfo.meetingId, currentSelectUser.userId)
+                }
+            }
+        }
+    }, [socketStatus])
 
     useEffect(() => {
         initialContext()
     }, [])
+
 
     useSocketMessage(WsTypes.IReceiveMessageType.after_connection, (res: WsTypes.IWsResponse) => {
         const {data} = res;
@@ -65,7 +109,7 @@ const MeetingUsersList: React.FC = () => {
         const {data} = res;
         const {msg, userOppsiteId} = data;
         const newList: any = userList.map((user: any) => {
-            if(user._id === userOppsiteId){
+            if (user._id === userOppsiteId) {
                 return {
                     ...user,
                     unReadCount: 0,
@@ -81,7 +125,7 @@ const MeetingUsersList: React.FC = () => {
         const {data} = res;
         const {sender_id} = data;
         const newList: any = userList.map((user: any) => {
-            if(user._id === sender_id){
+            if (user._id === sender_id) {
                 return {
                     ...user,
                     unReadCount: user.unReadCount + 1,
@@ -95,14 +139,34 @@ const MeetingUsersList: React.FC = () => {
 
     return (
         <Container>
-            <>
+            <div onClick={() => setLoading(!loading)}>啊哈哈哈</div>
+            <List
+                itemLayout="vertical"
+                size="large"
+                dataSource={userList}
+                renderItem={(user: any) => (
+                    <Skeleton key={user._id} loading={loading} active>
+                        <div className='user-item' onClick={() => udpateUser(user)}>
+                            <Badge count={user.unReadCount} size="small">
+                                <Avatar style={{backgroundColor: '#fde3cf', color: '#f56a00'}}>U</Avatar>
+                            </Badge>
+                            <div className='user-info'>
+                                <span>{user.username}</span>
+                                <div><HandleTag status={user.user_status} /></div>
+                            </div>
+                        </div>
+                    </Skeleton>
+                )}
+            >
+            </List>
+            {/* <>
                 {
                     userList.map((user: any) => {
                         return (
                             <div key={user._id} className='user-item' onClick={() => udpateUser(user)}>
                                 <Badge count={user.unReadCount} size="small">
                                     <Avatar style={{backgroundColor: '#fde3cf', color: '#f56a00'}}>U</Avatar>
-                                 </Badge>
+                                </Badge>
                                 <div className='user-info'>
                                     <span>{user.username}</span>
                                     <div><HandleTag status={user.user_status} /></div>
@@ -110,7 +174,7 @@ const MeetingUsersList: React.FC = () => {
                             </div>
                         )
                     })
-                }</>
+                }</> */}
         </Container>
     )
 }
@@ -124,7 +188,6 @@ const Container = styled.div`
         display: flex;
         align-items: center;
         padding: 10px 0;
-        padding-left: 10px;
         border-bottom: 1px solid #ccc;
         transition: 0.3s;
 

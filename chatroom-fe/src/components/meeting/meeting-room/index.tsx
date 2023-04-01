@@ -31,27 +31,27 @@ const MeetingRoom: React.FC = () => {
     }, [currentSelectUser])
 
     useEffect(() => {
-        if(bottomOfMeetingRoomRef.current){
+        if (bottomOfMeetingRoomRef.current) {
             // @ts-ignore
             bottomOfMeetingRoomRef.current.scrollToBottom()
         }
-    },[])
+    }, [])
 
     useSocketMessage(WsTypes.IReceiveMessageType.message_sending_finish, (res: IWsResponse<IChattingMessageReponseType>) => {
         console.log('消息发送成功', res);
     })
 
 
-    useSocketMessage(WsTypes.IReceiveMessageType.get_message_out_meeting, 
+    useSocketMessage(WsTypes.IReceiveMessageType.get_message_out_meeting,
         (res: IWsResponse<IChattingMessageReponseType>) => {
-        const data = res  
-        // setMessageList([...messageList, data]); 
-        console.log('聊天室外的消息接收',data);
-    })
+            const data = res
+            // setMessageList([...messageList, data]); 
+            console.log('聊天室外的消息接收', data);
+        })
 
     useSocketMessage(WsTypes.IReceiveMessageType.get_message_in_meeting, (res: IWsResponse<IChattingMessageReponseType>) => {
-        const {data} = res  
-        if(data){
+        const {data} = res
+        if (data) {
             setMessageList([...messageList, data]);
         }
 
@@ -60,7 +60,7 @@ const MeetingRoom: React.FC = () => {
 
     useSocketMessage(WsTypes.IReceiveMessageType.message_sending_finish, (res: IWsResponse<IChattingMessageReponseType>) => {
         const {code, data} = res
-        if(code === 200){
+        if (code === 200) {
             setMessageList([...messageList, data]);
         }
     })
@@ -79,15 +79,16 @@ const MeetingRoom: React.FC = () => {
         // 把meetingId储存到url
         router.push(`/meeting`, {
             query: {
-                meetingId
+                meetingId,
+                userOppsiteId
             }
         })
-        
+
         updateMeetingInfoAction({
             meetingId
         })
+
         // 此时获取到id了，我们需要加入当前room
-        // console.log('meetingId', meetingId);
         sendMessage(WsTypes.ISendMessageType.create_meeting, {
             meetingId,
             prevMeetingId: prevMeetingId.current,
@@ -107,30 +108,30 @@ const MeetingRoom: React.FC = () => {
 
     useEffect(() => {
         console.log('---------------------');
-        async function foo(){
-                const {userId} = userInfo;
-                const {userId: userOppsiteId} = currentSelectUser;
-                const {asPath}  =router
-                const query = asPath.split('?')[1]
+        async function foo() {
+            const {userId} = userInfo;
+            const {userId: userOppsiteId} = currentSelectUser;
+            const {asPath} = router
+            const query = asPath.split('?')[1]
 
-                if(!query) return;
+            if (!query) return;
 
-                const [meetingIdKey, meetingId] = query.split('=')
-                console.log(meetingIdKey, meetingId);
-                if(meetingIdKey === 'meetingId' && meetingId) {
-                    sendMessage(WsTypes.ISendMessageType.create_meeting, {
-                        meetingId,
-                        prevMeetingId: meetingId,
-                        userId,
-                        userOppsiteId,
-                    })
-                    console.log('-------------');
-            
-                    const historyList = await postMeetingHistory(meetingId as string)
-                    setMessageList(historyList);
-                    console.log(historyList);
-                }
-            
+            const [meetingIdKey, meetingId] = query.split('=')
+            console.log(meetingIdKey, meetingId);
+            if (meetingIdKey === 'meetingId' && meetingId) {
+                sendMessage(WsTypes.ISendMessageType.create_meeting, {
+                    meetingId,
+                    prevMeetingId: meetingId,
+                    userId,
+                    userOppsiteId,
+                })
+                console.log('-------------');
+
+                const historyList = await postMeetingHistory(meetingId as string)
+                setMessageList(historyList);
+                console.log(historyList);
+            }
+
         }
         foo()
     }, [])
@@ -138,12 +139,12 @@ const MeetingRoom: React.FC = () => {
     return (
         <Container>
             <>
-            {
-                messageList.map((message:IChattingMessageReponseType) => {
-                    return <MeetingMessage message={message} key={message.message_id}/>              
-                })
-            }
-            <MeetingFooter ref={bottomOfMeetingRoomRef}/>
+                {
+                    messageList.map((message: IChattingMessageReponseType) => {
+                        return <MeetingMessage message={message} key={message.message_id} />
+                    })
+                }
+                <MeetingFooter ref={bottomOfMeetingRoomRef} />
             </>
         </Container>
     )
@@ -159,3 +160,12 @@ const Container = styled.div`
     align-items: flex-start;
     row-gap: 3px;
 `
+
+export async function getServerSideProps(context: any) {
+    console.log(context);
+    return {
+        props: {
+            vvv: 'siuuuu'
+        }, // will be passed to the page component as props
+    }
+}
